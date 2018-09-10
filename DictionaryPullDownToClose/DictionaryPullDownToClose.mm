@@ -26,11 +26,81 @@
 
 static CGFloat kThreshold = 80;
 
-static CGFloat sCurrentYOffset = 0;
-static CGFloat sBeginYOffset = 0;
-static CGFloat sEndYOffset = 0;
-static UILabel *sLabelInfo = nil;
-static UIView *sContainerView = nil;
+@interface DDParsecServiceCollectionViewController : UINavigationController<UITableViewDelegate>
+- (void)doneButtonPressed:(id)arg1;
+@end
+
+static DDParsecServiceCollectionViewController * sController;
+
+namespace {
+    class ScrollHelper
+    {
+    public:
+        CGFloat sBeginYOffset = 0;
+        CGFloat sEndYOffset = 0;
+        UILabel *sLabelInfo = nil;
+        UIView *sContainerView = nil;
+        bool sTipPositionFirstPage = true;
+        bool sEnable = false;
+
+        void scrollViewDidScroll(UIScrollView * scrollView){
+            if(!sEnable)return;
+            
+            if(sBeginYOffset != 0){
+                CGFloat length = scrollView.contentOffset.y - sBeginYOffset;
+//                NSLog(@"qiweidict : offset length = %@",@(length));
+                if(fabs(length) > kThreshold && length < 0){
+                    if(!sLabelInfo && sContainerView){
+                        CGSize screenSize = [UIScreen mainScreen].bounds.size;
+                        sLabelInfo = [[UILabel alloc]init];
+                        sLabelInfo.bounds = CGRectMake(0, 0, 130, 20);
+                        if(sTipPositionFirstPage){
+                            sLabelInfo.center = CGPointMake(screenSize.width / 2, -10);
+                        }else{
+                            sLabelInfo.center = CGPointMake(screenSize.width / 2, 100);
+                        }
+                        sLabelInfo.text = @"release to close";
+                        sLabelInfo.textColor = [UIColor grayColor];
+                        [sContainerView addSubview:sLabelInfo];
+                    }
+                }else{
+                    if(sLabelInfo){
+                        [sLabelInfo removeFromSuperview];
+                        sLabelInfo = nil;
+                    }
+                    
+                }
+            }
+        }
+        void scrollViewWillBeginDragging(UIScrollView * scrollView){
+//            NSLog(@"qiweidict : begin %@",@(scrollView.contentOffset.y));
+            if(scrollView.contentOffset.y <= 0)sEnable = true;
+            else sEnable = false;
+            if(!sEnable)return;
+
+            sBeginYOffset = scrollView.contentOffset.y;
+//            NSLog(@"qiweidict : begin drag = %@",@(sBeginYOffset));
+        }
+        void scrollViewWillEndDragging(UIScrollView * scrollView, void (^done)()){
+            if(!sEnable)return;
+            sEndYOffset = scrollView.contentOffset.y;
+            CGFloat length = sEndYOffset - sBeginYOffset;
+//            NSLog(@"qiweidict : end drag = %@, length = %@",@(sEndYOffset), @(length));
+            
+            if(sEndYOffset < sBeginYOffset && fabs(length) > kThreshold && length < 0){
+//                NSLog(@"qiweidict : should pull down to close");
+                if(done) done();
+            }
+            
+            sBeginYOffset = 0;
+            sEndYOffset = 0;
+        }
+    };
+}
+
+static ScrollHelper a;
+static ScrollHelper b;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 @interface DDParsecTableViewController : UITableViewController
@@ -41,45 +111,23 @@ CHDeclareClass(DDParsecTableViewController); // declare class
 
 CHOptimizedMethod(1, self, void, DDParsecTableViewController, viewDidAppear,BOOL,value1)
 {
-    sContainerView = self.view;
-    NSLog(@"qiweidict : first page viewDidAppear %@",self);
+//    NSLog(@"qiweidict : first page viewDidAppear %@ , navi = %@",self,self.navigationController);
+    a.sContainerView = self.view;
+    a.sTipPositionFirstPage = true;
+    sController = (DDParsecServiceCollectionViewController *)self.navigationController;
+
     CHSuper(1, DDParsecTableViewController, viewDidAppear, value1);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@interface DDParsecServiceCollectionViewController : UINavigationController<UITableViewDelegate>
-- (void)doneButtonPressed:(id)arg1;
-@end
 
 @class DDParsecServiceCollectionViewController;
 CHDeclareClass(DDParsecServiceCollectionViewController); // declare class
 
 CHOptimizedMethod(1, self, void, DDParsecServiceCollectionViewController, scrollViewDidScroll,UIScrollView*,scrollView)
 {
-//    NSLog(@"qiweidict : content offset = %@",@(scrollView.contentOffset.y));
-    sCurrentYOffset = scrollView.contentOffset.y;
-    if(sBeginYOffset != 0){
-        CGFloat length = fabs(sCurrentYOffset - sBeginYOffset);
-        NSLog(@"qiweidict : offset length = %@",@(length));
-        if(length > kThreshold){
-            if(!sLabelInfo && sContainerView){
-                CGSize screenSize = [UIScreen mainScreen].bounds.size;
-                sLabelInfo = [[UILabel alloc]init];
-                sLabelInfo.bounds = CGRectMake(0, 0, 130, 20);
-                sLabelInfo.center = CGPointMake(screenSize.width / 2, -10);
-                sLabelInfo.text = @"Release to close";
-                sLabelInfo.textColor = [UIColor grayColor];
-                [sContainerView addSubview:sLabelInfo];
-            }
-        }else{
-            if(sLabelInfo){
-                [sLabelInfo removeFromSuperview];
-                sLabelInfo = nil;
-            }
-            
-        }
-    }
+    a.scrollViewDidScroll(scrollView);
     CHSuper(1, DDParsecServiceCollectionViewController, scrollViewDidScroll,scrollView);
 }
 
@@ -89,20 +137,12 @@ CHOptimizedMethod(1, self, void, DDParsecServiceCollectionViewController, scroll
 @implementation DDParsecServiceCollectionViewController (dictionarypulldowntoclose)
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
-    sBeginYOffset = sCurrentYOffset;
-    NSLog(@"qiweidict : begin drag = %@",@(sBeginYOffset));
+    a.scrollViewWillBeginDragging(scrollView);
 }
 - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
-    sEndYOffset = sCurrentYOffset;
-    CGFloat length = fabs(sEndYOffset - sBeginYOffset);
-    NSLog(@"qiweidict : end drag = %@, length = %@",@(sEndYOffset), @(length));
-    
-    if(sEndYOffset < sBeginYOffset && length > kThreshold){
-        NSLog(@"qiweidict : should pull down to close");
+    a.scrollViewWillEndDragging(scrollView,^{
         [self doneButtonPressed:nil];
-    }
-    
-    sBeginYOffset = 0;
+    });
 }
 
 @end
@@ -116,11 +156,18 @@ CHOptimizedMethod(1, self, void, DDParsecServiceCollectionViewController, scroll
 @end
 @implementation DUEntryViewController (dictionarypulldowntoclose)
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
-    NSLog(@"qiweidict: did scroll : %@",@(scrollView.contentOffset.y));
+//    NSLog(@"qiweidict: did scroll : %@",@(scrollView.contentOffset.y));
+    b.sTipPositionFirstPage = false;
+    b.scrollViewDidScroll(scrollView);
 }
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
+    b.scrollViewWillBeginDragging(scrollView);
 }
 - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
+    b.scrollViewWillEndDragging(scrollView,^{
+//        NSLog(@"qiweidict : need close now");
+        [sController doneButtonPressed:nil];
+    });
 }
 @end
 
@@ -129,9 +176,11 @@ CHDeclareClass(DUEntryViewController); // declare class
 
 CHOptimizedMethod(0, self, void, DUEntryViewController, viewDidLoad)
 {
-    NSLog(@"qiweidict : detail viewDidLoad %p %@",self,self);
+//    NSLog(@"qiweidict : detail viewDidLoad %p %@",self,self);
     CHSuper(0, DUEntryViewController, viewDidLoad);
     
+    b.sContainerView = self.view;
+
     UIView *view = self.view;
     if(view.subviews.count > 0){
         UIWebView *webView = view.subviews[0];

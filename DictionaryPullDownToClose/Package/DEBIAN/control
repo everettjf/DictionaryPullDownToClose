@@ -1,6 +1,6 @@
 Package: com.everettjf.DictionaryPullDownToClose
 Name: DictionaryPullDownToClose
-Version: 0.2-1
+Version: 0.3-1
 Description: Add "Pull down release to close/dismiss" feature to system dictionary
 Section: Tweaks
 Depends: firmware (>= 5.0), mobilesubstrate
