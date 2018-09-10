@@ -1,7 +1,7 @@
 Package: com.everettjf.DictionaryPullDownToClose
 Name: DictionaryPullDownToClose
 Version: 0.2-1
-Description: Add "Pull down release to close/dismiss" feature to system dictionary view
+Description: Add "Pull down release to close/dismiss" feature to system dictionary
 Section: Tweaks
 Depends: firmware (>= 5.0), mobilesubstrate
 Conflicts: 
@@ -11,7 +11,7 @@ Architecture: iphoneos-arm
 Author: everettjf
 dev: everettjf
 Homepage: https://everettjf.github.io
-Depiction: When I look up some words in iBooks, my fingers can not touch the top right "Done" button in the dictionary view while iPhone is taking in my left hand. This tweak add a "Pull down release to close" feature to the dictionary view for iBooks/Safari/OtherApps using system dictionary.
+Depiction: When I look up some words in iBooks or other apps, my fingers can not touch the top right "Done" button in the dictionary view while iPhone is taking in my left hand. This tweak add a "Pull down release to close" feature to the dictionary view for iBooks,Safari or other apps using system dictionary.
 Maintainer: everettjf
 Icon: 
 
