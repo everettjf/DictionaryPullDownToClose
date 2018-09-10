@@ -96,7 +96,7 @@ CHOptimizedMethod(1, self, void, DDParsecServiceCollectionViewController, scroll
     CGFloat length = fabs(sEndYOffset - sBeginYOffset);
     NSLog(@"qiweidict : end drag = %@, length = %@",@(sEndYOffset), @(length));
     
-    if(length > kThreshold){
+    if(sEndYOffset < sBeginYOffset && length > kThreshold){
         NSLog(@"qiweidict : should pull down to close");
         [self doneButtonPressed:nil];
     }
