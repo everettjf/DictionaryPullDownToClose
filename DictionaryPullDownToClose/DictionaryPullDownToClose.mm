@@ -25,6 +25,7 @@
 //   5. (optionally) call old method using CHSuper()
 
 static CGFloat kThreshold = 80;
+
 static CGFloat sCurrentYOffset = 0;
 static CGFloat sBeginYOffset = 0;
 static CGFloat sEndYOffset = 0;
@@ -38,11 +39,11 @@ static UIView *sContainerView = nil;
 @class DDParsecTableViewController;
 CHDeclareClass(DDParsecTableViewController); // declare class
 
-CHOptimizedMethod(1, self, void, DDParsecTableViewController, viewWillAppear,BOOL,value1)
+CHOptimizedMethod(1, self, void, DDParsecTableViewController, viewDidAppear,BOOL,value1)
 {
     sContainerView = self.view;
-    NSLog(@"qiweidict : view will appear");
-    CHSuper(1, DDParsecTableViewController, viewWillAppear, value1);
+    NSLog(@"qiweidict : first page viewDidAppear %@",self);
+    CHSuper(1, DDParsecTableViewController, viewDidAppear, value1);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,14 +107,50 @@ CHOptimizedMethod(1, self, void, DDParsecServiceCollectionViewController, scroll
 
 @end
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+@interface DUEntryViewController : UIViewController<UIScrollViewDelegate>
+@end
+
+@interface DUEntryViewController (dictionarypulldowntoclose)
+@end
+@implementation DUEntryViewController (dictionarypulldowntoclose)
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    NSLog(@"qiweidict: did scroll : %@",@(scrollView.contentOffset.y));
+}
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
+}
+- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
+}
+@end
+
+@class DUEntryViewController;
+CHDeclareClass(DUEntryViewController); // declare class
+
+CHOptimizedMethod(0, self, void, DUEntryViewController, viewDidLoad)
+{
+    NSLog(@"qiweidict : detail viewDidLoad %p %@",self,self);
+    CHSuper(0, DUEntryViewController, viewDidLoad);
+    
+    UIView *view = self.view;
+    if(view.subviews.count > 0){
+        UIWebView *webView = view.subviews[0];
+        webView.scrollView.delegate = self;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 CHConstructor // code block that runs immediately upon load
 {
 	@autoreleasepool
 	{
         CHLoadLateClass(DDParsecTableViewController);
         CHLoadLateClass(DDParsecServiceCollectionViewController);
+        CHLoadLateClass(DUEntryViewController);
         
-        CHHook(1, DDParsecTableViewController, viewWillAppear);
+        CHHook(1, DDParsecTableViewController, viewDidAppear);
         CHHook(1, DDParsecServiceCollectionViewController, scrollViewDidScroll); // register hook
+        CHHook(0, DUEntryViewController, viewDidLoad);
 	}
 }
