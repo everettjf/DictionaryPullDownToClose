@@ -16,6 +16,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "CaptainHook/CaptainHook.h"
+#import <AudioToolbox/AudioToolbox.h>
 
 // Objective-C runtime hooking using CaptainHook:
 //   1. declare class using CHDeclareClass()
@@ -40,7 +41,6 @@ namespace {
         CGFloat sEndYOffset = 0;
         UILabel *sLabelInfo = nil;
         UIView *sContainerView = nil;
-        bool sTipPositionFirstPage = true;
         bool sEnable = false;
 
         void scrollViewDidScroll(UIScrollView * scrollView){
@@ -54,14 +54,12 @@ namespace {
                         CGSize screenSize = [UIScreen mainScreen].bounds.size;
                         sLabelInfo = [[UILabel alloc]init];
                         sLabelInfo.bounds = CGRectMake(0, 0, 130, 20);
-                        if(sTipPositionFirstPage){
-                            sLabelInfo.center = CGPointMake(screenSize.width / 2, -10);
-                        }else{
-                            sLabelInfo.center = CGPointMake(screenSize.width / 2, 100);
-                        }
+                        sLabelInfo.center = CGPointMake(screenSize.width / 2, -10);
                         sLabelInfo.text = @"release to close";
                         sLabelInfo.textColor = [UIColor grayColor];
                         [sContainerView addSubview:sLabelInfo];
+                        
+                        AudioServicesPlaySystemSound(1519);
                     }
                 }else{
                     if(sLabelInfo){
@@ -113,7 +111,6 @@ CHOptimizedMethod(1, self, void, DDParsecTableViewController, viewDidAppear,BOOL
 {
 //    NSLog(@"qiweidict : first page viewDidAppear %@ , navi = %@",self,self.navigationController);
     a.sContainerView = self.view;
-    a.sTipPositionFirstPage = true;
     sController = (DDParsecServiceCollectionViewController *)self.navigationController;
 
     CHSuper(1, DDParsecTableViewController, viewDidAppear, value1);
@@ -157,7 +154,6 @@ CHOptimizedMethod(1, self, void, DDParsecServiceCollectionViewController, scroll
 @implementation DUEntryViewController (dictionarypulldowntoclose)
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
 //    NSLog(@"qiweidict: did scroll : %@",@(scrollView.contentOffset.y));
-    b.sTipPositionFirstPage = false;
     b.scrollViewDidScroll(scrollView);
 }
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
@@ -178,13 +174,12 @@ CHOptimizedMethod(0, self, void, DUEntryViewController, viewDidLoad)
 {
 //    NSLog(@"qiweidict : detail viewDidLoad %p %@",self,self);
     CHSuper(0, DUEntryViewController, viewDidLoad);
-    
-    b.sContainerView = self.view;
 
     UIView *view = self.view;
     if(view.subviews.count > 0){
         UIWebView *webView = view.subviews[0];
         webView.scrollView.delegate = self;
+        b.sContainerView = webView.scrollView;
     }
 }
 
