@@ -1,6 +1,6 @@
 # DictionaryPullDownToClose
 
-A Tweak : Pull Down And Release To Close System Dictionary
+Tweak : Pull down and release to close iOS system dictionary.
 
 For video see below :
 
